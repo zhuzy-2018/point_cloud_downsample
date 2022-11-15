@@ -8,13 +8,13 @@
 struct PointXYZIRT
 {
   PCL_ADD_POINT4D;
-  uint8_t intensity;
+  float intensity;
   uint16_t ring = 0;
   double timestamp = 0;
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 } EIGEN_ALIGN16;
 POINT_CLOUD_REGISTER_POINT_STRUCT(PointXYZIRT,
-(float, x, x) (float, y, y) (float, z, z) (uint8_t, intensity, intensity) 
+(float, x, x) (float, y, y) (float, z, z) (float, intensity, intensity) 
 (uint16_t, ring, ring) (double, timestamp, timestamp))
 
 ros::Subscriber cloud_sub;
@@ -27,19 +27,24 @@ void pointCloud_callback(const sensor_msgs::PointCloud2Ptr& msg_in)
     cloud_in.reset(new pcl::PointCloud<PointXYZIRT>());
     pcl::moveFromROSMsg(*msg_in, *cloud_in);
     //rewrite intensity
-    static double max_time = 0;
+    static double max_time;
+    static double min_time;
+    max_time = DBL_MIN;
+    min_time = DBL_MAX;
 
     for(size_t i = 0; i < cloud_in->size(); i++)
     {
         auto  &point = cloud_in->points[i];
         max_time = std::max(max_time, point.timestamp);
+        min_time = std::min(min_time, point.timestamp);
     }
 
     for(size_t i = 0; i < cloud_in->size(); i++)
     {
         auto  &point = cloud_in->points[i];
-        point.intensity = (uint8_t)(point.timestamp * 255 / max_time); 
+        point.intensity = (uint8_t)((point.timestamp - min_time) * 255 / (max_time - min_time)); 
     }
+    ROS_INFO("min | max | max_time_stamp: %f | %f | %f",min_time, max_time, (max_time - min_time));
 
     //output cloud
     sensor_msgs::PointCloud2 msg_out;
