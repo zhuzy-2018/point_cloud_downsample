@@ -2,36 +2,39 @@
     "configurations": [
         {
             "browse": {
-                "databaseFilename": "",
-                "limitSymbolsToIncludedHeaders": true
+                "databaseFilename": "${default}",
+                "limitSymbolsToIncludedHeaders": false
             },
             "includePath": [
-                "/opt/ros/kinetic/include/**",
-                "/home/neousys/PIONEER/pioneer_master_ws/devel/include/**",
-                "/home/neousys/PIONEER/pioneer_master_ws/src/pioneer_stack/button_receiver/include/**",
-                "/home/neousys/PIONEER/pioneer_master_ws/src/pioneer_stack/button_vehicle/include/**",
-                "/home/neousys/PIONEER/pioneer_master_ws/src/3rdparty/dataspeed_can/dataspeed_can_msg_filters/include/**",
-                "/home/neousys/PIONEER/pioneer_master_ws/src/3rdparty/dataspeed_can/dataspeed_can_usb/include/**",
-                "/home/neousys/PIONEER/pioneer_master_ws/src/pioneer_stack/ulc_driver/dataspeed_ulc_can/include/**",
-                "/home/neousys/PIONEER/pioneer_master_ws/src/pioneer_stack/fixtoodom/include/**",
-                "/home/neousys/PIONEER/pioneer_master_ws/src/pioneer_stack/gps_driver/include/**",
-                "/home/neousys/PIONEER/pioneer_master_ws/src/pioneer_stack/ibeo_core/include/**",
-                "/home/neousys/PIONEER/pioneer_master_ws/src/pioneer_stack/ibeo_driver/ibeo_scala/include/**",
-                "/home/neousys/PIONEER/pioneer_master_ws/src/pioneer_stack/ioboard_driver/include/**",
-                "/home/neousys/PIONEER/pioneer_master_ws/src/pioneer_stack/lidar_driver/lidar_merge-master/include/**",
-                "/home/neousys/PIONEER/pioneer_master_ws/src/3rdparty/lusb/include/**",
-                "/home/neousys/PIONEER/pioneer_master_ws/src/pioneer_stack/ibeo_driver/network_interface/include/**",
-                "/home/neousys/PIONEER/pioneer_master_ws/src/pioneer_stack/radar_node/include/**",
-                "/home/neousys/PIONEER/pioneer_master_ws/src/pioneer_stack/relocalization/include/**",
-                "/home/neousys/PIONEER/pioneer_master_ws/src/pioneer_stack/lidar_driver/velodyne_driver/include/**",
-                "/home/neousys/PIONEER/pioneer_master_ws/src/pioneer_stack/lidar_driver/velodyne_pointcloud/include/**",
+                "/home/zzy/catkin_ws/devel/include/**",
+                "/home/zzy/carto_ws/install_isolated/include/**",
+                "/opt/ros/melodic/include/**",
+                "/media/zzy/TB/multi-vehicle/projects/ros_multi_vehicle/devel/include/**",
+                "/media/zzy/TB/jiehuo/sort/sort_lidar_ws/devel/include/**",
+                "/media/zzy/TB/multi-vehicle/catkin_ws/devel/include/**",
+                "/media/zzy/TB/jiehuo/sort/sort_lidar_ws/src/fusion_s1/include/**",
+                "/media/zzy/TB/jiehuo/sort/sort_lidar_ws/src/gps_receiver/include/**",
+                "/media/zzy/TB/multi-vehicle/catkin_ws/src/learning_topic/include/**",
+                "/media/zzy/TB/jiehuo/sort/sort_lidar_ws/src/lidar-calibration/include/**",
+                "/media/zzy/TB/jiehuo/sort/sort_lidar_ws/src/lidar_cam_vis/include/**",
+                "/media/zzy/TB/jiehuo/sort/sort_lidar_ws/src/lidar_camera_calibration/include/**",
+                "/media/zzy/TB/jiehuo/sort/sort_lidar_ws/src/hd-map-trans-to-depth-image/include/**",
+                "/media/zzy/TB/multi-vehicle/projects/ros_multi_vehicle/src/nlink_retransmission_node/include/**",
+                "/media/zzy/TB/multi-vehicle/projects/ros_multi_vehicle/src/nlink_to_PoseStamped/include/**",
+                "/media/zzy/TB/multi-vehicle/projects/ros_multi_vehicle/src/pos_publisher/include/**",
+                "/media/zzy/TB/jiehuo/sort/sort_lidar_ws/src/sort_fusion/include/**",
+                "/home/zzy/catkin_ws/src/rslidar_downsample/include/**",
+                "/home/zzy/turtlebot3_ws/src/turtlebot3_simulations/turtlebot3_fake/include/**",
+                "/home/zzy/turtlebot3_ws/src/turtlebot3_simulations/turtlebot3_gazebo/include/**",
+                "/media/zzy/TB/multi-vehicle/projects/ros_multi_vehicle/src/wifi_localization/include/**",
                 "/usr/include/**"
             ],
             "name": "ROS",
             "intelliSenseMode": "gcc-x64",
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "gnu11",
-            "cppStandard": "c++17"
+            "cppStandard": "c++14",
+            "configurationProvider": "ms-vscode.cmake-tools"
         }
     ],
     "version": 4

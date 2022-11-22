@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(test_robosense)
+project(rslidar_downsample)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
-
+set(CMAKE_BUILD_TYPE "debug")
+set(CMAKE_CXX_FLAGS_RELEASE " -Wall -g -pthread")
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -14,7 +15,8 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-find_package(PCL REQUIRED QUIET)
+find_package(PCL REQUIRED QUIET)#this pc is 1.8.1
+find_package(OpenMP REQUIRED)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -104,7 +106,7 @@ find_package(PCL REQUIRED QUIET)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
  INCLUDE_DIRS include
- LIBRARIES test_robosense
+ LIBRARIES rslidar_downsample
  CATKIN_DEPENDS sensor_msgs pcl_conversions
  DEPENDS system_lib PCL
 )
@@ -116,7 +118,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  include
   ${PCL_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
@@ -127,7 +129,7 @@ link_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/test_robosense.cpp
+#   src/${PROJECT_NAME}/rslidar_downsample.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -138,7 +140,7 @@ link_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME}_node src/test_robosense_node.cpp)
+add_executable(${PROJECT_NAME}_node src/rslidar_downsample_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -150,10 +152,12 @@ add_executable(${PROJECT_NAME}_node src/test_robosense_node.cpp)
 ## same as for the library above
 add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+target_compile_options(${PROJECT_NAME}_node PRIVATE ${OpenMP_CXX_FLAGS})
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
+  ${OpenMP_CXX_FLAGS}
 )
 
 #############
@@ -203,7 +207,7 @@ target_link_libraries(${PROJECT_NAME}_node
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_test_robosense.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_rslidar_downsample.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
