@@ -382,13 +382,12 @@ public:
 
         cloud_in = cloud_input;
         size_t i;
+        _filter_vec[0]->setInputCloud(cloud_in);
         for(i = 0; i < _filter_vec.size(); i++)
         {
-            _filter_vec[i]->setInputCloud(cloud_in);
-            if((i + 1) > _filter_vec.size()) // about to end loop
-                _filter_vec[i]->filter(*cloud_out);
-            else
-                _filter_vec[i]->filter(*cloud_in);
+            _filter_vec[i]->filter(*cloud_out);
+            if((i + 1) < _filter_vec.size()) // about to end loop
+                _filter_vec[i + 1]->setInputCloud(cloud_out);
         }
 
         std::cout << "random downsample time : " << timer.toc() / 1000 << " s "<< std::endl;
