@@ -5,8 +5,7 @@ project(rslidar_downsample)
 add_compile_options(-std=c++11)
 set(CMAKE_BUILD_TYPE "release")
 # set(CMAKE_BUILD_TYPE "debug")
-set(CMAKE_CXX_FLAGS_RELEASE " -O3 -Wall -g -pthread")
-set(CMAKE_CXX_FLAGS_RELEASE " -O0 -Wall -g -pthread")
+set(CMAKE_CXX_FLAGS_RELEASE " -O4 -Wall -g -pthread")
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages

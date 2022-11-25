@@ -98,6 +98,21 @@ enum FilterType{
 };
 
 template <typename PointT>
+class FilterParams{
+public:
+    FilterType type;
+    //params
+    unsigned int random_sample_point;
+    float voxel_grid_leaf_size;
+    std::string pass_through_field_name;
+    double pass_through_limit_min;
+    double pass_through_limit_max;
+    double uniform_sample_search_radius;
+    //ptr
+    std::shared_ptr<pcl::Filter<PointT>> filter_ptr;
+};
+
+template <typename PointT>
 class RSLIDAR_DS{
 public:
 
@@ -123,6 +138,7 @@ public:
     std::shared_ptr<PCL_FILTER_FACTORY<PointT>> filter_factory;
     std::shared_ptr<pcl::Filter<PointT>> _filter;//run time Polymorphism
     std::vector<std::shared_ptr<pcl::Filter<PointT>>> _filter_vec;
+    std::vector<FilterParams<PointT>> _filter_params_vec;
 
     unsigned int _random_sample_point;// RANDOM_SAMPLE param
     double _search_radius;//UNIFORM_SAMPLE param
@@ -159,50 +175,125 @@ public:
         initialization();
     }
 
-    void add_filter(XmlRpc::XmlRpcValue& filter_param){
-
-        downsample_mode = static_cast<std::string>(filter_param["type"]);
+    FilterParams<PointT> XmlRpc_to_FilterParams(XmlRpc::XmlRpcValue& filter_param){
+        FilterParams<PointT> fp;
 
         int temp_param_sample_point;
         double temp_param_leaf_size;
 
-        switch (string_convertor[downsample_mode])
+        fp.type = string_convertor[static_cast<std::string>(filter_param["type"])];
+
+        temp_param_sample_point = static_cast<int>(filter_param["random_sample_point"]);
+        fp.random_sample_point = (unsigned int)temp_param_sample_point;
+
+        fp.uniform_sample_search_radius = static_cast<double>(filter_param["uniform_sample_search_radius"]);
+
+        temp_param_leaf_size = static_cast<double>(filter_param["voxel_grid_leaf_size"]);
+        fp.voxel_grid_leaf_size = (float)temp_param_leaf_size;
+
+        fp.pass_through_field_name = static_cast<std::string>(filter_param["pass_through_field_name"]);
+        fp.pass_through_limit_min = static_cast<double>(filter_param["pass_through_limit_min"]);
+        fp.pass_through_limit_max = static_cast<double>(filter_param["pass_through_limit_max"]);
+
+        return fp;
+    }
+
+    void add_filter(XmlRpc::XmlRpcValue& filter_param){
+
+        FilterParams<PointT> fp = XmlRpc_to_FilterParams(filter_param);
+        add_filter(fp);
+
+        // downsample_mode = static_cast<std::string>(filter_param["type"]);
+
+        // int temp_param_sample_point;
+        // double temp_param_leaf_size;
+
+        // switch (string_convertor[downsample_mode])
+        // {
+        // case RANDOM_SAMPLE:
+        //     _filter_type = FilterType::RANDOM_SAMPLE;
+        //     filter_factory.reset(new PCL_RANDOM_SAMPLE_FACTORY<PointT>());
+        //     temp_param_sample_point = static_cast<int>(filter_param["random_sample_point"]);
+        //     _random_sample_point = (unsigned int)temp_param_sample_point;
+        //     _filter_vec.push_back(filter_factory->create_filter(_random_sample_point));
+        //     RS_COUTG << "random sample filter --> sample points : " << _random_sample_point << RS_ENDL;
+        //     break;
+
+        // case UNIFORM_SAMPLE:
+        //     _filter_type = FilterType::UNIFORM_SAMPLE;
+        //     filter_factory.reset(new PCL_UNIFORM_SAMPLE_FACTORY<PointT>());
+        //     _search_radius = static_cast<double>(filter_param["uniform_sample_search_radius"]);
+        //     _filter_vec.push_back(filter_factory->create_filter(_search_radius));
+        //     RS_COUTG << "uniform sample --> search radius : " << _search_radius << RS_ENDL;
+        //     break;
+        
+        // case VOXEL_GRID:
+        //     _filter_type = FilterType::VOXEL_GRID;
+        //     filter_factory.reset(new PCL_VOXEL_GRID_FACTORY<PointT>());
+        //     temp_param_leaf_size = static_cast<double>(filter_param["voxel_grid_leaf_size"]);
+        //     _leaf_size = (float)temp_param_leaf_size;
+        //     _filter_vec.push_back(filter_factory->create_filter(_leaf_size));
+        //     RS_COUTG << "voxel grid --> leaf size : " << _leaf_size << RS_ENDL;
+        //     break;
+
+        // case PASS_THROUGH:
+        //     _filter_type = FilterType::PASS_THROUGH;
+        //     filter_factory.reset(new PCL_PASS_THROUGH_FACTORY<PointT>());
+        //     _field_name = static_cast<std::string>(filter_param["pass_through_field_name"]);
+        //     _field_limit_min = static_cast<double>(filter_param["pass_through_limit_min"]);
+        //     _field_limit_max = static_cast<double>(filter_param["pass_through_limit_max"]);
+        //     _filter_vec.push_back(filter_factory->create_filter(_field_name, _field_limit_min, _field_limit_max));
+        //     RS_COUTG << "pass through filter --> field name | field min | field max : " << _field_name
+        //     << " | " << _field_limit_min << " | " << _field_limit_max << RS_ENDL;
+        //     break;
+
+        // case CUSTOM:
+        //     RS_COUTG << "use custom filter please remember use set_custom_filter function" << RS_ENDL;
+        //     break;
+            
+        
+        // default:
+        //     RS_ERROR << downsample_mode << " is invalid filter type!! please check ros param!!" << RS_ENDL;
+        //     break;
+        // }
+    }
+
+    void add_filter(FilterParams<PointT>& fp){
+
+
+        switch (fp.type)
         {
         case RANDOM_SAMPLE:
             _filter_type = FilterType::RANDOM_SAMPLE;
             filter_factory.reset(new PCL_RANDOM_SAMPLE_FACTORY<PointT>());
-            temp_param_sample_point = static_cast<int>(filter_param["random_sample_point"]);
-            _random_sample_point = (unsigned int)temp_param_sample_point;
-            _filter_vec.push_back(filter_factory->create_filter(_random_sample_point));
-            RS_COUTG << "random sample filter --> sample points : " << _random_sample_point << RS_ENDL;
+            fp.filter_ptr = filter_factory->create_filter(fp.random_sample_point);
+            _filter_params_vec.push_back(fp);
+            RS_COUTG << "random sample filter --> sample points : " << fp.random_sample_point << RS_ENDL;
             break;
 
         case UNIFORM_SAMPLE:
             _filter_type = FilterType::UNIFORM_SAMPLE;
             filter_factory.reset(new PCL_UNIFORM_SAMPLE_FACTORY<PointT>());
-            _search_radius = static_cast<double>(filter_param["uniform_sample_search_radius"]);
-            _filter_vec.push_back(filter_factory->create_filter(_search_radius));
-            RS_COUTG << "uniform sample --> search radius : " << _search_radius << RS_ENDL;
+            fp.filter_ptr = filter_factory->create_filter(fp.uniform_sample_search_radius);
+            _filter_params_vec.push_back(fp);
+            RS_COUTG << "uniform sample --> search radius : " << fp.uniform_sample_search_radius << RS_ENDL;
             break;
         
         case VOXEL_GRID:
             _filter_type = FilterType::VOXEL_GRID;
             filter_factory.reset(new PCL_VOXEL_GRID_FACTORY<PointT>());
-            temp_param_leaf_size = static_cast<double>(filter_param["voxel_grid_leaf_size"]);
-            _leaf_size = (float)temp_param_leaf_size;
-            _filter_vec.push_back(filter_factory->create_filter(_leaf_size));
-            RS_COUTG << "voxel grid --> leaf size : " << _leaf_size << RS_ENDL;
+            fp.filter_ptr = filter_factory->create_filter(fp.voxel_grid_leaf_size);
+            _filter_params_vec.push_back(fp);
+            RS_COUTG << "voxel grid --> leaf size : " << fp.voxel_grid_leaf_size << RS_ENDL;
             break;
 
         case PASS_THROUGH:
             _filter_type = FilterType::PASS_THROUGH;
             filter_factory.reset(new PCL_PASS_THROUGH_FACTORY<PointT>());
-            _field_name = static_cast<std::string>(filter_param["pass_through_field_name"]);
-            _field_limit_min = static_cast<double>(filter_param["pass_through_limit_min"]);
-            _field_limit_max = static_cast<double>(filter_param["pass_through_limit_max"]);
-            _filter_vec.push_back(filter_factory->create_filter(_field_name, _field_limit_min, _field_limit_max));
-            RS_COUTG << "pass through filter --> field name | field min | field max : " << _field_name
-            << " | " << _field_limit_min << " | " << _field_limit_max << RS_ENDL;
+            fp.filter_ptr = filter_factory->create_filter(fp.pass_through_field_name, fp.pass_through_limit_min, fp.pass_through_limit_max);
+            _filter_params_vec.push_back(fp);
+            RS_COUTG << "pass through filter --> field name | field min | field max : " << fp.pass_through_field_name
+            << " | " << fp.pass_through_limit_min << " | " << fp.pass_through_limit_max << RS_ENDL;
             break;
 
         case CUSTOM:
@@ -381,16 +472,19 @@ public:
         timer.tic();
 
         cloud_in = cloud_input;
-        size_t i;
-        _filter_vec[0]->setInputCloud(cloud_in);
-        for(i = 0; i < _filter_vec.size(); i++)
+        size_t i, vec_size;
+        vec_size = _filter_params_vec.size();
+        _filter_params_vec[0].filter_ptr->setInputCloud(cloud_in);
+        for(i = 0; i < vec_size; i++)
         {
-            _filter_vec[i]->filter(*cloud_out);
-            if((i + 1) < _filter_vec.size()) // about to end loop
-                _filter_vec[i + 1]->setInputCloud(cloud_out);
+            _filter_params_vec[i].filter_ptr->filter(*cloud_out);
+            if((i + 1) < vec_size) // about to end loop
+                _filter_params_vec[i + 1].filter_ptr->setInputCloud(cloud_out);
+            else
+                break;
         }
 
-        std::cout << "random downsample time : " << timer.toc() / 1000 << " s "<< std::endl;
+        std::cout << "filtering time : " << timer.toc() / 1000 << " s "<< std::endl;
 
         std::cout << "pointcloud OUT points num : " << cloud_out->size() << std::endl;
         
