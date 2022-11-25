@@ -10,12 +10,13 @@
 template<class PointT>
 class PCL_FILTER_FACTORY{
 public:
+    std::shared_ptr<pcl::Filter<PointT>> _filter;
     PCL_FILTER_FACTORY(){}
-    virtual std::shared_ptr<pcl::Filter<PointT>> create_filter(){}
-    virtual std::shared_ptr<pcl::Filter<PointT>> create_filter(double){}
-    virtual std::shared_ptr<pcl::Filter<PointT>> create_filter(float){}
-    virtual std::shared_ptr<pcl::Filter<PointT>> create_filter(unsigned int){}
-    virtual std::shared_ptr<pcl::Filter<PointT>> create_filter(const std::string&, const float&, const float&){}
+    virtual std::shared_ptr<pcl::Filter<PointT>> create_filter(){return _filter;}
+    virtual std::shared_ptr<pcl::Filter<PointT>> create_filter(double){return _filter;}
+    virtual std::shared_ptr<pcl::Filter<PointT>> create_filter(float){return _filter;}
+    virtual std::shared_ptr<pcl::Filter<PointT>> create_filter(unsigned int){return _filter;}
+    virtual std::shared_ptr<pcl::Filter<PointT>> create_filter(const std::string&, const float&, const float&){return _filter;}
     virtual ~PCL_FILTER_FACTORY(){}
 };
 
@@ -108,6 +109,7 @@ public:
     std::string topic_in;
     std::string topic_out;
     std::string downsample_mode;
+    std::map<std::string, FilterType> string_convertor;
 
 
     ros::Subscriber cloud_sub;
@@ -126,20 +128,27 @@ public:
     double _field_limit_min, _field_limit_max;//PASS_THROUGH param
 
     void nh_get_param(){
-        nh.param<std::string>("rslidar/downsample/topic_in", topic_in, "topic_in");
-        nh.param<std::string>("rslidar/downsample/topic_out",topic_out, "topic_out");
-        nh.param<std::string>("rslidar/downsample/downsample_mode", downsample_mode, "UNIFORM_SAMPLE");
+        nh.param<std::string>("rslidar_ds/topic_in", topic_in, "topic_in");
+        nh.param<std::string>("rslidar_ds/topic_out",topic_out, "topic_out");
+        nh.param<std::string>("rslidar_ds/downsample_mode", downsample_mode, "UNIFORM_SAMPLE");
         int temp_param;
-        nh.param<int>("rslidar/downsample/random_sample_point",temp_param, 15000);
+        nh.param<int>("rslidar_ds/random_sample_point",temp_param, 15000);
         _random_sample_point = (unsigned int) temp_param;
-        nh.param<double>("rslidar/downsample/uniform_sample_search_radius", _search_radius, 0.2);
-        nh.param<float>("rslidar/downsample/voxel_grid_leaf_size", 0.2);
-        nh.param<std::string>("rslidar/downsample/pass_through_field_name", _field_name, "z");
-        nh.param<double>("rslidar/downsample/pass_through_limit_min", _field_limit_min, 0.15);
-        nh.param<double>("rslidar/downsample/pass_through_limit_max", _field_limit_max, 200);
+        nh.param<double>("rslidar_ds/uniform_sample_search_radius", _search_radius, 0.2);
+        nh.param<float>("rslidar_ds/voxel_grid_leaf_size", 0.2);
+        nh.param<std::string>("rslidar_ds/pass_through_field_name", _field_name, "z");
+        nh.param<double>("rslidar_ds/pass_through_limit_min", _field_limit_min, 0.15);
+        nh.param<double>("rslidar_ds/pass_through_limit_max", _field_limit_max, 200);
     }
 
     void initialization(){
+        string_convertor["RANDOM_SAMPLE"] = RANDOM_SAMPLE;
+        string_convertor["UNIFORM_SAMPLE"] = UNIFORM_SAMPLE;
+        string_convertor["VOXEL_GRID"] = VOXEL_GRID;
+        string_convertor["PASS_THROUGH"] = PASS_THROUGH;
+        string_convertor["CUSTOM"] = CUSTOM;
+        string_convertor["FILTER_NUM"] = FILTER_NUM;
+
         cloud_sub = nh.subscribe<sensor_msgs::PointCloud2>(topic_in, 5, &RSLIDAR_DS::ros_point_cloud_callback, this);
         cloud_pub = nh.advertise<sensor_msgs::PointCloud2>(topic_out, 5);
         cloud_in.reset(new pcl::PointCloud<PointT>());
@@ -161,18 +170,21 @@ public:
             _random_sample_point = (unsigned int) param;
             filter_factory.reset(new PCL_RANDOM_SAMPLE_FACTORY<PointT>());
             _filter = filter_factory->create_filter(_random_sample_point);
+            RS_COUTG << "random sample filter --> sample points : " << _random_sample_point << RS_ENDL;
             break;
 
         case UNIFORM_SAMPLE:
             _search_radius = (float) param;
             filter_factory.reset(new PCL_UNIFORM_SAMPLE_FACTORY<PointT>());
             _filter = filter_factory->create_filter(_search_radius);
+            RS_COUTG << "uniform sample --> search radius : " << _search_radius << RS_ENDL;
             break;
 
         case VOXEL_GRID:
             _leaf_size = (float) param;
             filter_factory.reset(new PCL_VOXEL_GRID_FACTORY<PointT>());
             _filter = filter_factory->create_filter(_leaf_size);
+            RS_COUTG << "voxel grid --> leaf size : " << _leaf_size << RS_ENDL;
             break;
 
         case PASS_THROUGH://交给构造函数重载了
@@ -207,43 +219,51 @@ public:
 
         filter_factory.reset(new PCL_PASS_THROUGH_FACTORY<PointT>());
         _filter = filter_factory->create_filter(_field_name, _field_limit_min, _field_limit_max);
+        RS_COUTG << "pass through filter --> field name | field min | field max : " << _field_name
+        << " | " << _field_limit_min << " | " << _field_limit_max << RS_ENDL;
     }
 
     RSLIDAR_DS(){
         nh_get_param();
         initialization();
-        switch (downsample_mode)
+        switch (string_convertor[downsample_mode])
         {
-        case "RANDOM_SAMPLE":
+        case RANDOM_SAMPLE:
             _filter_type = FilterType::RANDOM_SAMPLE;
             filter_factory.reset(new PCL_RANDOM_SAMPLE_FACTORY<PointT>());
             _filter = filter_factory->create_filter(_random_sample_point);
+            RS_COUTG << "random sample filter --> sample points : " << _random_sample_point << RS_ENDL;
             break;
 
-        case "UNIFORM_SAMPLE":
+        case UNIFORM_SAMPLE:
             _filter_type = FilterType::UNIFORM_SAMPLE;
             filter_factory.reset(new PCL_UNIFORM_SAMPLE_FACTORY<PointT>());
             _filter = filter_factory->create_filter(_search_radius);
+            RS_COUTG << "uniform sample --> search radius : " << _search_radius << RS_ENDL;
             break;
         
-        case "VOXEL_GRID":
+        case VOXEL_GRID:
             _filter_type = FilterType::VOXEL_GRID;
             filter_factory.reset(new PCL_VOXEL_GRID_FACTORY<PointT>());
             _filter = filter_factory->create_filter(_leaf_size);
+            RS_COUTG << "voxel grid --> leaf size : " << _leaf_size << RS_ENDL;
             break;
 
-        case "PASS_THROUGH":
+        case PASS_THROUGH:
             _filter_type = FilterType::PASS_THROUGH;
             filter_factory.reset(new PCL_PASS_THROUGH_FACTORY<PointT>());
             _filter = filter_factory->create_filter(_field_name, _field_limit_min, _field_limit_max);
+            RS_COUTG << "pass through filter --> field name | field min | field max : " << _field_name
+            << " | " << _field_limit_min << " | " << _field_limit_max << RS_ENDL;
             break;
 
-        case "CUSTOM":
+        case CUSTOM:
             RS_COUTG << "use custom filter please remember use set_custom_filter function" << RS_ENDL;
             break;
             
         
         default:
+            RS_ERROR << downsample_mode << " is invalid filter type!! please check ros param!!" << RS_ENDL;
             break;
         }
 
@@ -282,22 +302,24 @@ public:
         cloud_pub.publish(msg_out);
     }
 
-    PointCloudPtr point_cloud_handler(const PointCloudConstPtr& cloud_in){
+    PointCloudPtr point_cloud_handler(const PointCloudConstPtr& cloud_input){
         std::vector<int> indices;
-        pcl::removeNaNFromPointCloud(*cloud_in, indices);
+        pcl::removeNaNFromPointCloud(*cloud_input, indices);
 
-        std::cout << "pointcloud IN points num : " << cloud_in->size() << std::endl;
+        std::cout << "pointcloud IN points num : " << cloud_input->size() << std::endl;
 
         pcl::console::TicToc timer;
         timer.tic();
 
-        setInputCloud(cloud_in);
+        setInputCloud(cloud_input);
 
         filter(*cloud_out);
 
         std::cout << "random downsample time : " << timer.toc() / 1000 << " s "<< std::endl;
 
         std::cout << "pointcloud OUT points num : " << cloud_out->size() << std::endl;
+        
+        return cloud_out;
     }
 
 

@@ -8,6 +8,7 @@
 #include <vector>
 #include <thread>
 #include <string>
+#include <map>
 #include <ros/ros.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>

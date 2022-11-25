@@ -1,0 +1,14 @@
+rslidar_ds:
+
+  topic_in : "/lidar/vlp32_middle/PointCloud2_compensated"
+  topic_out : "rslidar_ds_out"
+
+  downsample_mode: "UNIFORM_SAMPLE"
+
+  random_sample_point: 15000
+  uniform_sample_search_radius: 0.2
+  voxel_grid_leaf_size: 0.2
+  pass_through_field_name: "z"
+  pass_through_limit_min: 0.15
+  pass_through_limit_max: 200
+

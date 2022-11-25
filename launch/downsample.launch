@@ -1,0 +1,10 @@
+<launch>
+
+<arg name = "project" default ="rslidar_downsample"/>
+
+<rosparam file="$(find rslidar_downsample)/config/rslidar_ds_param.yaml" command="load" />
+
+<node pkg = "$(arg project)" type = "$(arg project)_node" name="rslidar_ds" output = "screen">
+</node>
+
+</launch>
