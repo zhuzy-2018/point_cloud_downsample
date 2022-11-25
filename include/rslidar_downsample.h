@@ -107,7 +107,7 @@ public:
     FilterType _filter_type;
 
     ros::NodeHandle nh;
-    // XmlRpc::XmlRpcValue filter_params_list;
+    XmlRpc::XmlRpcValue filter_params_list;
     std::string topic_in;
     std::string topic_out;
     std::string downsample_mode;
@@ -122,7 +122,7 @@ public:
 
     std::shared_ptr<PCL_FILTER_FACTORY<PointT>> filter_factory;
     std::shared_ptr<pcl::Filter<PointT>> _filter;//run time Polymorphism
-    // std::vector<std::shared_ptr<pcl::Filter<PointT>>> _filter_vec;
+    std::vector<std::shared_ptr<pcl::Filter<PointT>>> _filter_vec;
 
     unsigned int _random_sample_point;// RANDOM_SAMPLE param
     double _search_radius;//UNIFORM_SAMPLE param
@@ -130,7 +130,14 @@ public:
     std::string _field_name;//PASS_THROUGH param
     double _field_limit_min, _field_limit_max;//PASS_THROUGH param
 
-    void nh_get_param(){
+    void nh_get_param_and_init(){
+        string_convertor["RANDOM_SAMPLE"] = RANDOM_SAMPLE;
+        string_convertor["UNIFORM_SAMPLE"] = UNIFORM_SAMPLE;
+        string_convertor["VOXEL_GRID"] = VOXEL_GRID;
+        string_convertor["PASS_THROUGH"] = PASS_THROUGH;
+        string_convertor["CUSTOM"] = CUSTOM;
+        string_convertor["FILTER_NUM"] = FILTER_NUM;
+
         nh.param<std::string>("rslidar_ds/topic_in", topic_in, "topic_in");
         nh.param<std::string>("rslidar_ds/topic_out",topic_out, "topic_out");
         nh.param<std::string>("rslidar_ds/downsample_mode", downsample_mode, "UNIFORM_SAMPLE");
@@ -143,17 +150,73 @@ public:
         nh.param<double>("rslidar_ds/pass_through_limit_min", _field_limit_min, 0.15);
         nh.param<double>("rslidar_ds/pass_through_limit_max", _field_limit_max, 200);
 
-        // nh.param("rslidar_ds/filters_list", filter_params_list);
-        // RS_COUTG << filter_params_list << RS_ENDL;
+        nh.getParam("rslidar_ds/filters_list", filter_params_list);// somehow XmlRpc must use getParam rather than param 
+        for(int i = 0; i < filter_params_list.size(); i++)
+        {
+            add_filter(filter_params_list[i]);
+        }
+
+        initialization();
+    }
+
+    void add_filter(XmlRpc::XmlRpcValue& filter_param){
+
+        downsample_mode = static_cast<std::string>(filter_param["type"]);
+
+        int temp_param_sample_point;
+        double temp_param_leaf_size;
+
+        switch (string_convertor[downsample_mode])
+        {
+        case RANDOM_SAMPLE:
+            _filter_type = FilterType::RANDOM_SAMPLE;
+            filter_factory.reset(new PCL_RANDOM_SAMPLE_FACTORY<PointT>());
+            temp_param_sample_point = static_cast<int>(filter_param["random_sample_point"]);
+            _random_sample_point = (unsigned int)temp_param_sample_point;
+            _filter_vec.push_back(filter_factory->create_filter(_random_sample_point));
+            RS_COUTG << "random sample filter --> sample points : " << _random_sample_point << RS_ENDL;
+            break;
+
+        case UNIFORM_SAMPLE:
+            _filter_type = FilterType::UNIFORM_SAMPLE;
+            filter_factory.reset(new PCL_UNIFORM_SAMPLE_FACTORY<PointT>());
+            _search_radius = static_cast<double>(filter_param["uniform_sample_search_radius"]);
+            _filter_vec.push_back(filter_factory->create_filter(_search_radius));
+            RS_COUTG << "uniform sample --> search radius : " << _search_radius << RS_ENDL;
+            break;
+        
+        case VOXEL_GRID:
+            _filter_type = FilterType::VOXEL_GRID;
+            filter_factory.reset(new PCL_VOXEL_GRID_FACTORY<PointT>());
+            temp_param_leaf_size = static_cast<double>(filter_param["voxel_grid_leaf_size"]);
+            _leaf_size = (float)temp_param_leaf_size;
+            _filter_vec.push_back(filter_factory->create_filter(_leaf_size));
+            RS_COUTG << "voxel grid --> leaf size : " << _leaf_size << RS_ENDL;
+            break;
+
+        case PASS_THROUGH:
+            _filter_type = FilterType::PASS_THROUGH;
+            filter_factory.reset(new PCL_PASS_THROUGH_FACTORY<PointT>());
+            _field_name = static_cast<std::string>(filter_param["pass_through_field_name"]);
+            _field_limit_min = static_cast<double>(filter_param["pass_through_limit_min"]);
+            _field_limit_max = static_cast<double>(filter_param["pass_through_limit_max"]);
+            _filter_vec.push_back(filter_factory->create_filter(_field_name, _field_limit_min, _field_limit_max));
+            RS_COUTG << "pass through filter --> field name | field min | field max : " << _field_name
+            << " | " << _field_limit_min << " | " << _field_limit_max << RS_ENDL;
+            break;
+
+        case CUSTOM:
+            RS_COUTG << "use custom filter please remember use set_custom_filter function" << RS_ENDL;
+            break;
+            
+        
+        default:
+            RS_ERROR << downsample_mode << " is invalid filter type!! please check ros param!!" << RS_ENDL;
+            break;
+        }
     }
 
     void initialization(){
-        string_convertor["RANDOM_SAMPLE"] = RANDOM_SAMPLE;
-        string_convertor["UNIFORM_SAMPLE"] = UNIFORM_SAMPLE;
-        string_convertor["VOXEL_GRID"] = VOXEL_GRID;
-        string_convertor["PASS_THROUGH"] = PASS_THROUGH;
-        string_convertor["CUSTOM"] = CUSTOM;
-        string_convertor["FILTER_NUM"] = FILTER_NUM;
 
         cloud_sub = nh.subscribe<sensor_msgs::PointCloud2>(topic_in, 5, &RSLIDAR_DS::ros_point_cloud_callback, this);
         cloud_pub = nh.advertise<sensor_msgs::PointCloud2>(topic_out, 5);
@@ -164,8 +227,8 @@ public:
     template<typename Param>
     RSLIDAR_DS(FilterType type, const Param& param){//尽力了，只能想到用模板这种编译时多态方法。
 
-        nh_get_param();
-        initialization();
+        nh_get_param_and_init();
+
         _filter_type = type;
 
         // _filter = filter_factory->create_filter();
@@ -209,8 +272,8 @@ public:
     }
 
     RSLIDAR_DS(FilterType type, const std::string& field_name , const float& limit_min, const float& limit_max){
-        nh_get_param();
-        initialization();
+        nh_get_param_and_init();
+
         if(type != FilterType::PASS_THROUGH){
             RS_ERROR << "input param *FilterType* wrong , check your parameter !" << RS_ENDL;
             throw std::invalid_argument("input param *FilterType* wrong , check your parameter !");
@@ -230,8 +293,8 @@ public:
     }
 
     RSLIDAR_DS(){
-        nh_get_param();
-        initialization();
+        nh_get_param_and_init();
+
         switch (string_convertor[downsample_mode])
         {
         case RANDOM_SAMPLE:
@@ -308,7 +371,7 @@ public:
         cloud_pub.publish(msg_out);
     }
 
-    PointCloudPtr point_cloud_handler(const PointCloudConstPtr& cloud_input){
+    PointCloudPtr point_cloud_handler(const PointCloudPtr& cloud_input){
         std::vector<int> indices;
         pcl::removeNaNFromPointCloud(*cloud_input, indices);
 
@@ -317,9 +380,16 @@ public:
         pcl::console::TicToc timer;
         timer.tic();
 
-        setInputCloud(cloud_input);
-
-        filter(*cloud_out);
+        cloud_in = cloud_input;
+        size_t i;
+        for(i = 0; i < _filter_vec.size(); i++)
+        {
+            _filter_vec[i]->setInputCloud(cloud_in);
+            if((i + 1) > _filter_vec.size()) // about to end loop
+                _filter_vec[i]->filter(*cloud_out);
+            else
+                _filter_vec[i]->filter(*cloud_in);
+        }
 
         std::cout << "random downsample time : " << timer.toc() / 1000 << " s "<< std::endl;
 
