@@ -2,6 +2,7 @@
 #define _RSLIDAR_DOWNSAMPLE_H_
 
 #include <rslidar_ds_common.h>
+#include <XmlRpc.h>
 
 /**
  * @brief pcl filter factory base
@@ -106,6 +107,7 @@ public:
     FilterType _filter_type;
 
     ros::NodeHandle nh;
+    // XmlRpc::XmlRpcValue filter_params_list;
     std::string topic_in;
     std::string topic_out;
     std::string downsample_mode;
@@ -120,6 +122,7 @@ public:
 
     std::shared_ptr<PCL_FILTER_FACTORY<PointT>> filter_factory;
     std::shared_ptr<pcl::Filter<PointT>> _filter;//run time Polymorphism
+    // std::vector<std::shared_ptr<pcl::Filter<PointT>>> _filter_vec;
 
     unsigned int _random_sample_point;// RANDOM_SAMPLE param
     double _search_radius;//UNIFORM_SAMPLE param
@@ -139,6 +142,9 @@ public:
         nh.param<std::string>("rslidar_ds/pass_through_field_name", _field_name, "z");
         nh.param<double>("rslidar_ds/pass_through_limit_min", _field_limit_min, 0.15);
         nh.param<double>("rslidar_ds/pass_through_limit_max", _field_limit_max, 200);
+
+        // nh.param("rslidar_ds/filters_list", filter_params_list);
+        // RS_COUTG << filter_params_list << RS_ENDL;
     }
 
     void initialization(){
