@@ -10,6 +10,7 @@
 #include <string>
 #include <map>
 #include <ros/ros.h>
+#include <pcl/pcl_config.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
@@ -19,6 +20,8 @@
 #include <pcl/filters/uniform_sampling.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/passthrough.h>
+#include <pcl/filters/crop_hull.h>
+#include <pcl/surface/concave_hull.h>
 
 #include <pcl/console/time.h>
 

@@ -13,8 +13,11 @@ rslidar_ds:
   pass_through_limit_max: 200
 
   filters_list:
+    - {}
     - {
         type: "UNIFORM_SAMPLE",
         uniform_sample_search_radius: 0.2
       }
+
+
 
