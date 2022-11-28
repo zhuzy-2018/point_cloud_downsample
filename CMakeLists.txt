@@ -16,7 +16,8 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-find_package(PCL REQUIRED QUIET)#this pc is 1.8.1
+message("PCL (version >= 1.8.0) required.\n")
+find_package(PCL 1.8 REQUIRED QUIET) #replace 1.8 by your pcl version, but it must greater than 1.8.0 
 find_package(OpenMP REQUIRED)
 
 
