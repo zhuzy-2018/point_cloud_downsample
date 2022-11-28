@@ -142,6 +142,7 @@ link_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${PROJECT_NAME}_node src/rslidar_downsample.cpp)
+# add_executable(${PROJECT_NAME}_test src/test_robosense_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -152,14 +153,22 @@ add_executable(${PROJECT_NAME}_node src/rslidar_downsample.cpp)
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(${PROJECT_NAME}_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 target_compile_options(${PROJECT_NAME}_node PRIVATE ${OpenMP_CXX_FLAGS})
+# target_compile_options(${PROJECT_NAME}_test PRIVATE ${OpenMP_CXX_FLAGS})
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
   ${OpenMP_CXX_FLAGS}
 )
+
+# target_link_libraries(${PROJECT_NAME}_test
+#   ${catkin_LIBRARIES}
+#   ${PCL_LIBRARIES}
+#   ${OpenMP_CXX_FLAGS}
+# )
 
 #############
 ## Install ##

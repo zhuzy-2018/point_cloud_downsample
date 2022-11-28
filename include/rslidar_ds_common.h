@@ -19,6 +19,8 @@
 #include <pcl/filters/uniform_sampling.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/passthrough.h>
+#include <pcl/filters/crop_hull.h>
+#include <pcl/surface/concave_hull.h>
 
 #include <pcl/console/time.h>
 
