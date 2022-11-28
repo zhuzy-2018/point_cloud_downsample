@@ -110,6 +110,11 @@ public:
     double uniform_sample_search_radius;
     //ptr
     std::shared_ptr<pcl::Filter<PointT>> filter_ptr;
+
+    FilterParams():type(FilterType::FILTER_NUM), random_sample_point(0),
+                    voxel_grid_leaf_size(0), pass_through_limit_min(DBL_MIN),
+                    pass_through_limit_max(DBL_MAX), uniform_sample_search_radius(0)
+    {}
 };
 
 template <typename PointT>
@@ -143,6 +148,7 @@ public:
     double _field_limit_min, _field_limit_max;//PASS_THROUGH param
 
     void nh_get_param_and_init(){
+        string_convertor[""] = FILTER_NUM;
         string_convertor["RANDOM_SAMPLE"] = RANDOM_SAMPLE;
         string_convertor["UNIFORM_SAMPLE"] = UNIFORM_SAMPLE;
         string_convertor["VOXEL_GRID"] = VOXEL_GRID;
@@ -163,10 +169,16 @@ public:
         nh.param<double>("rslidar_ds/pass_through_limit_max", _field_limit_max, 200);
 
         nh.getParam("rslidar_ds/filters_list", filter_params_list);// somehow XmlRpc must use getParam rather than param 
-        for(int i = 0; i < filter_params_list.size(); i++)
-        {
-            add_filter(filter_params_list[i]);
+        // RS_COUTG << "filter_params_list.size() | " << filter_params_list.size() << RS_ENDL;
+        try{
+            for(int i = 0; i < filter_params_list.size(); i++)
+            {
+                add_filter(filter_params_list[i]);
+            }
+        }catch(...){
+            RS_ERROR << "can't get ros param [filter_params_list]" <<RS_ENDL;
         }
+        
 
         initialization();
     }
@@ -238,6 +250,9 @@ public:
             RS_COUTG << "use custom filter please remember use set_custom_filter function" << RS_ENDL;
             break;
             
+        case FILTER_NUM:
+            RS_COUTG << "filter list has " << _filter_params_vec.size() << " filters in it" << RS_ENDL;
+            break;
         
         default:
             RS_ERROR << downsample_mode << " is invalid filter type!! please check ros param!!" << RS_ENDL;
@@ -296,8 +311,13 @@ public:
             RS_ERROR << "input param wrong , check your parameter !" << RS_ENDL;
             throw std::invalid_argument("input param wrong , check your parameter !");
             break;
+
         case CUSTOM:
             RS_COUTG << "use custom filter please remember use set_custom_filter function" << RS_ENDL;
+            break;
+
+        case FILTER_NUM:
+            RS_COUTG << "filter list has " << _filter_params_vec.size() << " filters in it" << RS_ENDL;
             break;
         
         default:

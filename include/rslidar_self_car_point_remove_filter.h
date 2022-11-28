@@ -5,6 +5,9 @@
 #include <rslidar_ds_common.h>
 #include <omp.h>
 
+#define RS_ERROR   std::cout << "\033[1m\033[31m"  // bold red
+#define RS_COUTG  std::cout << "\033[32m"         // green
+#define RS_ENDL    "\033[0m" << std::endl
 
 template<typename PointT>
 class SelfCarRemoveFilter : public pcl::Filter<PointT>{
@@ -22,6 +25,10 @@ public:
                         y_min(y_min), y_max(y_max),
                         z_min(z_min), z_max(z_max){
                             filter_name_ = "SelfCarRemoveFilter";
+                            RS_COUTG << filter_name_ << "-> x_min | x_max | y_min | y_max | z_min | z_max |"
+                            << x_min << " | " << x_max << " | " 
+                            << y_min << " | " << y_max << " | "
+                            << z_min << " | " << z_max << RS_ENDL;
                         }
 
     inline bool point_in_bbox(PointT pt){
@@ -48,7 +55,7 @@ public:
         output.is_dense     = true;                 // we filter out invalid points
 
         std::vector<int> indices;
-        indices.resize(input_->points.size());
+
         int count = 0;
         
         for(size_t i = 0; i < input_->points.size(); i++){
@@ -58,7 +65,7 @@ public:
             }
         }
 
-        output.points.resize(count);
+        output.points.clear();
         
 
         for(size_t i = 0; i < indices.size(); i++){
