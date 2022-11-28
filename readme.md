@@ -13,7 +13,7 @@
 
 RSLIDAR_DS还支持使用自定义的滤波器，详见<a href="#info"> 自定义滤波器</a>
 
-## requirement
+## requirements
 
 * pcl >= 1.8.0
 * OpenMP
@@ -39,8 +39,16 @@ RSLIDAR_DS还支持使用自定义的滤波器，详见<a href="#info"> 自定�
 * 自定义的滤波器需要重写构造函数，并且最好输出**类型**和**参数**
 * 自定义的滤波器需要重写`applyFilter()`函数，这个函数会被`pcl::Filter::filter()`调用，从而返回点云输出
 * 调用`setInputCloud()`后，输入的点云变量为`input_`，需要声明
+* 
 ``` c++
 using pcl::Filter<PointT>::input_;
+```
+
+使用时，应该
+``` c++
+    std::shared_ptr<pcl::Filter<PointXYZIRT>> filter_ptr; //声明基类指针
+    filter_ptr.reset(new SelfCarRemoveFilter<PointXYZIRT>(x_min, x_max, y_min, y_max, z_min, z_max)); //指向自定义子类
+    rsds.set_custom_filter(filter_ptr);//调用set_custom_filter函数传入filter指针（还有另一个重载，可以指定filter指针在列表中的顺序）
 ```
 
 
