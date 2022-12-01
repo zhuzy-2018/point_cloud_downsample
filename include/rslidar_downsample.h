@@ -32,6 +32,7 @@ class PCL_UNIFORM_SAMPLE_FACTORY : public PCL_FILTER_FACTORY<PointT>{
     virtual std::shared_ptr<pcl::Filter<PointT>> create_filter(double search_radius){
         std::shared_ptr<pcl::UniformSampling<PointT>> new_filter(new pcl::UniformSampling<PointT>());
         new_filter->setRadiusSearch(search_radius);
+        RS_COUTG << "uniform sample --> search radius : " << search_radius << RS_ENDL;
         return new_filter;
     }
 };
@@ -47,6 +48,7 @@ class PCL_RANDOM_SAMPLE_FACTORY : public PCL_FILTER_FACTORY<PointT>{
     virtual std::shared_ptr<pcl::Filter<PointT>> create_filter(unsigned int sample){
         std::shared_ptr<pcl::RandomSample<PointT>> new_filter(new pcl::RandomSample<PointT>());
         new_filter->setSample(static_cast<unsigned int> (sample));
+        RS_COUTG << "random sample filter --> sample points : " << sample << RS_ENDL;
         return new_filter;
     }
 };
@@ -62,6 +64,7 @@ class PCL_VOXEL_GRID_FACTORY : public PCL_FILTER_FACTORY<PointT>{
     virtual std::shared_ptr<pcl::Filter<PointT>> create_filter(float leaf_size){
         std::shared_ptr<pcl::VoxelGrid<PointT>> new_filter(new pcl::VoxelGrid<PointT>());
         new_filter->setLeafSize(leaf_size, leaf_size, leaf_size);
+        RS_COUTG << "voxel grid --> leaf size : " << leaf_size << RS_ENDL;
         return new_filter;
     }
 };
@@ -83,6 +86,8 @@ class PCL_PASS_THROUGH_FACTORY : public PCL_FILTER_FACTORY<PointT>{
         std::shared_ptr<pcl::PassThrough<PointT>> new_filter(new pcl::PassThrough<PointT>());
         new_filter->setFilterFieldName(field_name);
         new_filter->setFilterLimits(limit_min, limit_max);
+        RS_COUTG << "pass through filter --> field name | field min | field max : " << field_name
+        << " | " << limit_min << " | " << limit_max << RS_ENDL;
         return new_filter;
     }
 };
@@ -118,9 +123,11 @@ public:
 };
 
 template <typename PointT>
-class RSLIDAR_DS{
+class RSLIDAR_DS : public pcl::Filter<PointT>{
 public:
-
+    using pcl::Filter<PointT>::filter_name_;
+    using pcl::Filter<PointT>::getClassName;
+    using pcl::Filter<PointT>::input_;
     using PointCloudPtr = typename pcl::PointCloud<PointT>::Ptr;
     using PointCloudConstPtr = typename pcl::PointCloud<PointT>::ConstPtr;
 
@@ -173,7 +180,9 @@ public:
         try{
             for(int i = 0; i < filter_params_list.size(); i++)
             {
+                RS_COUTG << "filter [" << i << "] :";
                 add_filter(filter_params_list[i]);
+                std::cout << RS_ENDL;
             }
         }catch(...){
             RS_ERROR << "can't get ros param [filter_params_list]" <<RS_ENDL;
@@ -221,29 +230,24 @@ public:
             filter_factory.reset(new PCL_RANDOM_SAMPLE_FACTORY<PointT>());
             fp.filter_ptr = filter_factory->create_filter(fp.random_sample_point);
             _filter_params_vec.push_back(fp);
-            RS_COUTG << "random sample filter --> sample points : " << fp.random_sample_point << RS_ENDL;
             break;
 
         case UNIFORM_SAMPLE:
             filter_factory.reset(new PCL_UNIFORM_SAMPLE_FACTORY<PointT>());
             fp.filter_ptr = filter_factory->create_filter(fp.uniform_sample_search_radius);
             _filter_params_vec.push_back(fp);
-            RS_COUTG << "uniform sample --> search radius : " << fp.uniform_sample_search_radius << RS_ENDL;
             break;
         
         case VOXEL_GRID:
             filter_factory.reset(new PCL_VOXEL_GRID_FACTORY<PointT>());
             fp.filter_ptr = filter_factory->create_filter(fp.voxel_grid_leaf_size);
             _filter_params_vec.push_back(fp);
-            RS_COUTG << "voxel grid --> leaf size : " << fp.voxel_grid_leaf_size << RS_ENDL;
             break;
 
         case PASS_THROUGH:
             filter_factory.reset(new PCL_PASS_THROUGH_FACTORY<PointT>());
             fp.filter_ptr = filter_factory->create_filter(fp.pass_through_field_name, fp.pass_through_limit_min, fp.pass_through_limit_max);
             _filter_params_vec.push_back(fp);
-            RS_COUTG << "pass through filter --> field name | field min | field max : " << fp.pass_through_field_name
-            << " | " << fp.pass_through_limit_min << " | " << fp.pass_through_limit_max << RS_ENDL;
             break;
 
         case CUSTOM:
@@ -288,7 +292,6 @@ public:
             filter_factory.reset(new PCL_RANDOM_SAMPLE_FACTORY<PointT>());
             fp.filter_ptr = filter_factory->create_filter(fp.random_sample_point);
             _filter_params_vec.push_back(fp);
-            RS_COUTG << "random sample filter --> sample points : " << fp.random_sample_point << RS_ENDL;
             break;
 
         case UNIFORM_SAMPLE:
@@ -296,7 +299,6 @@ public:
             filter_factory.reset(new PCL_UNIFORM_SAMPLE_FACTORY<PointT>());
             fp.filter_ptr = filter_factory->create_filter(fp.uniform_sample_search_radius);
             _filter_params_vec.push_back(fp);
-            RS_COUTG << "uniform sample --> search radius : " << fp.uniform_sample_search_radius << RS_ENDL;
             break;
 
         case VOXEL_GRID:
@@ -304,7 +306,6 @@ public:
             filter_factory.reset(new PCL_VOXEL_GRID_FACTORY<PointT>());
             fp.filter_ptr = filter_factory->create_filter(fp.voxel_grid_leaf_size);
             _filter_params_vec.push_back(fp);
-            RS_COUTG << "voxel grid --> leaf size : " << fp.voxel_grid_leaf_size << RS_ENDL;
             break;
 
         case PASS_THROUGH://交给构造函数重载了
@@ -347,8 +348,6 @@ public:
         filter_factory.reset(new PCL_PASS_THROUGH_FACTORY<PointT>());
         fp.filter_ptr = filter_factory->create_filter(fp.pass_through_field_name, fp.pass_through_limit_min, fp.pass_through_limit_max);
         _filter_params_vec.push_back(fp);
-        RS_COUTG << "pass through filter --> field name | field min | field max : " << fp.pass_through_field_name
-        << " | " << fp.pass_through_limit_min << " | " << fp.pass_through_limit_max << RS_ENDL;
     }
 
     RSLIDAR_DS(){
@@ -424,6 +423,27 @@ public:
         std::cout << "pointcloud OUT points num : " << cloud_out->size() << std::endl;
         
         return cloud_out;
+    }
+
+    void applyFilter (pcl::PointCloud<PointT> &output){
+        // Has the input dataset been set already?
+        if (!input_)
+        {
+            PCL_WARN ("[pcl::%s::applyFilter] No input dataset given!\n", getClassName ().c_str ());
+            output.width = output.height = 0;
+            output.points.clear ();
+            return;
+        }
+
+        
+        cloud_out = point_cloud_handler(cloud_in);
+
+        output = *cloud_out;
+    }
+
+    void setInputCloud(const PointCloudPtr& input){
+        input_ = input;
+        cloud_in = input;
     }
 
 

@@ -14,10 +14,14 @@ rslidar_ds:
 
   filters_list:
     - {}
+    # - {
+    #     type: "UNIFORM_SAMPLE",
+    #     uniform_sample_search_radius: 0.2
+    #   }
     - {
-        type: "UNIFORM_SAMPLE",
-        uniform_sample_search_radius: 0.2
-      }
+        type: "RANDOM_SAMPLE",
+        random_sample_point: 57600
+    }
 
 
 
