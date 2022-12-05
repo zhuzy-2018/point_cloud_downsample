@@ -398,7 +398,7 @@ public:
 
     PointCloudPtr point_cloud_handler(const PointCloudPtr& cloud_input){
         std::vector<int> indices;
-        pcl::removeNaNFromPointCloud(*cloud_input, indices);
+        pcl::removeNaNFromPointCloud(*cloud_input, *cloud_input, indices);
 
         std::cout << "pointcloud IN points num : " << cloud_input->size() << std::endl;
 
